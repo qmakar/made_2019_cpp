@@ -1,15 +1,17 @@
 CC=g++
 
-all: my_prog
+all: calc
 
-my_prog: main.o square.o 
-    $(CC) -o my_prog main.o square.o
+calc: main.o
+	$(CC) -o calc.out main.o
 
-main.o: main.cpp square.h
-    $(CC) -c main.cpp
+main.o: main.cpp main.h
+	$(CC) -c main.cpp
 
-square.o: square.cpp square.h
-    $(CC) -c square.cpp
+
+run:
+	./calc.out "$(var)"
+#test:
 
 clean:
-    rm -rf *.o my_prog
+	rm -rf *.o calc
