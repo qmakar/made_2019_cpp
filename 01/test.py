@@ -33,4 +33,5 @@ if __name__ == "__main__":
     test("--2*4",                                 "Can't parse string:\n--2*4\n ^\nPlease, check your data!")
     test("--2**4",                                "Can't parse string:\n--2**4\n   ^\nPlease, check your data!")
     test("2 + 3 * 4 - -2",                        "16.000000")
+    test("2 ! 3 ; 4 - -2",                        "Can't parse string:\n2!3;4--2\n ^\nPlease, check your data!")
     

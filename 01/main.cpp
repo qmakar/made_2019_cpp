@@ -31,7 +31,6 @@ bool split(std::string source, std::string operations, std::string& lex1, std::s
     lex1 = source.substr(0, i);
     lex2 = source.substr(i + 1);
     op=source[i];
-//    std::cout << lex1 << " " << lex2 << std::endl;
     return true;
   }
   return false;
@@ -44,7 +43,6 @@ double expr(std::string source, unsigned long pos)
   char op;
   if (!split(source, "+-", lex1, lex2, op))
   {
-//    std::cout << lex1 << " !!! " << lex2 << " " <<source << std::endl;
     return item(source, pos);
     
   }
@@ -75,7 +73,6 @@ double item(std::string source, unsigned long pos)
   
   if (!split(source, "*/", lex1, lex2, op))
   {
-//      std::cout << lex1 << " !!! " << lex2 << " " <<source << std::endl;
       return str_to_double(source, pos);
   }
   else
@@ -100,7 +97,7 @@ int main(int argc, const char * argv[])
   str.erase(remove_if(str.begin(), str.end(), isspace), str.end());
   
   unsigned long pos = str.length();
-  if (not(check(str, pos)))
+  if (pos == 0 || not(check(str, pos)))
   {
     error_msg(str, pos);
     return -1;
