@@ -28,7 +28,7 @@ double str_to_double(std::string s, unsigned long pos)
     {
       if (!isdigit(s[i]))
       {
-        throw pos - i - 1;
+        throw pos - (s.length() - i - 1);
       }
     }
     throw pos;
