@@ -5,21 +5,6 @@
 //  Created by qmakar on 25.10.2019.
 //  Copyright © 2019 qmakar. All rights reserved.
 
-//  Используя метод рекурсивного спуска, написать калькулятор. Поддерживаемые операции:
-
-//    умножение
-//    деление
-//    cложение
-//    вычитание
-//    унарный минус
-//  Для вычислений использовать тип int, приоритет операций стандартный. Передача выражения осуществляется через аргумент командной строки, поступаемые числа целые, результат выводится в cout. Пример:
-//
-//    calc "2 + 3 * 4 - -2"
-//  Вывод:
-//
-//    16
-//  Должна быть обработка ошибок, в случае некорректного выражения выводить в консоль ошибку и возвращать код отличный от 0. Тесты обязательны.
-
 #include <iostream>
 #include <sstream>
 
@@ -27,7 +12,7 @@
 
 
 
-bool split(std::string source, std::string operations, std::string &lex1, std::string &lex2, char &op)
+bool split(std::string source, std::string operations, std::string& lex1, std::string& lex2, char& op)
 {
   long i = source.length() - 1;
   bool t;
@@ -59,22 +44,21 @@ double expr(std::string source, unsigned long pos)
   char op;
   if (!split(source, "+-", lex1, lex2, op))
   {
+//    std::cout << lex1 << " !!! " << lex2 << " " <<source << std::endl;
     return item(source, pos);
+    
   }
   else
   {
-//    std::cout << lex2 << std::endl;
     if (!isdigit(lex2[0]) && lex2[0] != '-')
     {
       throw pos - lex2.length();
     }
-//    std::cout << lex2 << std::endl;
     switch(op)
     {
       case '+':
         return expr(lex1, pos - lex2.length()) + item(lex2, pos);
       default: // case '-':
-//        std::cout << "DDDD" << std::endl;
         if (lex2.length()>=2 && lex2[0] == '-' && !isdigit(lex2[1]))
         {
           throw pos - lex2.length();
@@ -88,22 +72,24 @@ double item(std::string source, unsigned long pos)
 {
   std::string lex1, lex2;
   char op;
+  
   if (!split(source, "*/", lex1, lex2, op))
   {
-    return str_to_double(source, pos);
+//      std::cout << lex1 << " !!! " << lex2 << " " <<source << std::endl;
+      return str_to_double(source, pos);
   }
   else
   {
-    if (!isdigit(lex2[0]))
+    if (!isdigit(lex2[0]) && lex2[0] != '-')
     {
       throw pos - lex2.length();
     }
     switch(op)
     {
       case '*':
-        return item(lex1, pos - lex2.length()) * str_to_double(lex2, pos);
+        return item(lex1, pos - lex2.length() - 1) * str_to_double(lex2, pos);
       default: // case '/':
-        return item(lex1, pos - lex2.length()) / str_to_double(lex2, pos);
+        return item(lex1, pos - lex2.length() - 1) / str_to_double(lex2, pos);
     }
   }
 }
@@ -122,8 +108,8 @@ int main(int argc, const char * argv[])
   
   try
   {
-    double result = expr(str, pos);
-    std::cout << result << std::endl;
+    double result = expr(str, pos-1);
+    std::cout << std::fixed << result << std::endl;
   }
   catch(unsigned long bad_pos)
   {

@@ -9,7 +9,7 @@
 #ifndef main_h
 #define main_h
 
-bool split(std::string, std::string, std::string&, std::string&, char&); // Разделение строки на 2 лексемы
+bool split(std::string, std::string, std::string&, std::string&, char&, bool&); // Разделение строки на 2 лексемы
 double expr(std::string, unsigned long); // Вычисление выражения. Разделение по +-
 double item(std::string, unsigned long); // Разделение по */
 
@@ -24,6 +24,13 @@ double str_to_double(std::string s, unsigned long pos)
   std::stringstream convert(s);
   if (!(convert >> result))
   {
+    for (long i = s.length() - 1; i >= 0; i-- )
+    {
+      if (!isdigit(s[i]))
+      {
+        throw pos - i - 1;
+      }
+    }
     throw pos;
   }
   return result;

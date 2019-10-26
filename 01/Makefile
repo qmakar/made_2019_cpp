@@ -11,7 +11,9 @@ main.o: main.cpp main.h
 
 run:
 	./calc.out "$(var)"
-#test:
+
+test:
+	python3 test.py
 
 clean:
-	rm -rf *.o calc
+	rm -rf *.o calc.out
