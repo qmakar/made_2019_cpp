@@ -2,8 +2,8 @@
 //  Exception.cpp
 //  01
 //
-//  Created by Mak on 27.10.2019.
-//  Copyright © 2019 Mak. All rights reserved.
+//  Created by qmakar on 27.10.2019.
+//  Copyright © 2019 qmakar. All rights reserved.
 //
 
 #include "Exception.hpp"

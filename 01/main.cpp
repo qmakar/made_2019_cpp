@@ -27,7 +27,7 @@ int main(int argc, const char * argv[])
         double result = expr(str, pos-1);
         std::cout << std::fixed << result << std::endl;
     }
-    catch(Exception ex)
+    catch(const Exception& ex) // ref because we don't need copy class oblect
     {
         std::cout << ex.msg(str) << std::endl;
         return -1;
