@@ -2,14 +2,11 @@ CC=g++
 
 all: alloc
 
-alloc: main.o allocator.o test.o 
-	$(CC) -o alloc.out main.o allocator.o test.o
+alloc: main.o test.o 
+	$(CC) -o alloc.out main.o test.o
 
 main.o: main.cpp
 	$(CC) -std=c++11 -c  main.cpp
-
-allocator.o: allocator.cpp allocator.hpp
-	$(CC) -std=c++11 -c allocator.cpp
 
 test.o: test.cpp test.hpp
 	$(CC) -std=c++11 -c test.cpp

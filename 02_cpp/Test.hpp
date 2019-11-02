@@ -13,7 +13,6 @@
 #include <iostream>
 #include <cassert>
 #include "Allocator.hpp"
-#include "Allocator.cpp"
 
 void test1();
 void test2();
