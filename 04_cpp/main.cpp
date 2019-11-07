@@ -40,7 +40,7 @@ int main(int argc, const char * argv[]) {
     m4.print();
     
     assert(m4[0][0] == 0);  // assignment
-    assert(m4[1][2] == 9);  // of 31 line of code =)
+    assert(m4[1][2] == 9);  // of 28 line of code =)
     
     // test multiply
     
