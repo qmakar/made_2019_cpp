@@ -22,9 +22,17 @@ public:
     explicit Deserializer(std::istream& in) : in_(in){}
 
     template <class T>
-    Error load(T& object)
+    auto load (T& object) ->
+    typename std::enable_if<IsSerialize<T>::value, Error>::type
     {
         return object.serialize(*this);
+    }
+    
+    template <typename T>
+    auto load (T& object) ->
+    typename std::enable_if<!IsSerialize<T>::value, Error>::type
+    {
+        return Error::IsNotSerialized;
     }
     
     template <class... Args>

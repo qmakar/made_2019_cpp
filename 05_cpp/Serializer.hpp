@@ -38,29 +38,15 @@ public:
     template <typename T>
     auto save (T& object) ->
         typename std::enable_if<IsSerialize<T>::value, Error>::type
-//        (typename enable_if<IsSerialize<T>::value, T>::type& object)
     {
-//        std::cout << IsSerialize<T>::value << std::endl;
-//        if (IsSerialize<T>::value){
-            return object.serialize(*this);
-//        }
-//        else{
-//            return Error::IsNotSerialized;
-//        }
+        return object.serialize(*this);
     }
     
     template <typename T>
     auto save (T& object) ->
         typename std::enable_if<!IsSerialize<T>::value, Error>::type
-//    Error save(typename enable_if<!IsSerialize<T>::value, T>::type& object)
     {
-        //        std::cout << IsSerialize<T>::value << std::endl;
-        //        if (IsSerialize<T>::value){
-//        return object.serialize(*this);
-        //        }
-        //        else{
-                    return Error::IsNotSerialized;
-        //        }
+        return Error::IsNotSerialized;
     }
     
     template <class... Args>
