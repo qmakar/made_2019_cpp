@@ -21,16 +21,14 @@ class Deserializer
 public:
     explicit Deserializer(std::istream& in) : in_(in){}
 
-    template <class T>
-    auto load (T& object) ->
-    typename std::enable_if<IsSerialize<T>::value, Error>::type
+    template <typename T, std::enable_if_t<IsSerialize<T>::value, Error>* = nullptr>
+    Error load (T& object)
     {
         return object.serialize(*this);
     }
     
-    template <typename T>
-    auto load (T& object) ->
-    typename std::enable_if<!IsSerialize<T>::value, Error>::type
+    template <typename T, std::enable_if_t<!IsSerialize<T>::value, Error>* = nullptr>
+    Error load (T& object)
     {
         return Error::IsNotSerialized;
     }
@@ -46,11 +44,20 @@ private:
     template <class T, class... Args>
     Error process(T& val, Args&... args)
     {
-        return Error::IsNotSerialized;
+        if (process(val) != Error::NoError){
+            return Error::CorruptedArchive;
+        };
+        return process((args)...);
     }
     
-    template <class... Args>
-    Error process(bool& val, Args&... args)
+    template <class T>
+    Error process(T& val)
+    {
+        return Error::CorruptedArchive;
+    }
+    
+    template <>
+    Error process<bool>(bool& val)
     {
         std::string text;
         in_ >> text;
@@ -62,16 +69,12 @@ private:
         else
             return Error::CorruptedArchive;
         
-        if constexpr (sizeof...(Args) > 0){
-            return process((args)...);
-        }
-        else{
-            return Error::NoError;
-        }
+        return Error::NoError;
     }
     
-    template <class... Args>
-    Error process(uint64_t& val, Args&... args){
+    template <>
+    Error process<uint64_t>(uint64_t& val)
+    {
         std::string text;
         in_ >> text;
         
@@ -88,15 +91,8 @@ private:
         }
         
         val = std::stoull(text);
-        
-        if constexpr (sizeof...(Args) > 0){
-            return process((args)...);
-        }
-        else{
-            return Error::NoError;
-        }
+        return Error::NoError;
     }
-    
 };
 
 #endif /* Deserializer_hpp */

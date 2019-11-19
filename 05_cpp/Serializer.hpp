@@ -15,18 +15,6 @@
 template<typename T>
 struct IsSerialize;
 
-template<bool, typename T = void>
-struct enable_if
-{
-    
-};
-
-template<typename T>
-struct enable_if<true, T>
-{
-    using type = T;
-};
-
 class Serializer
 {
     std::ostream& out_;
@@ -35,37 +23,52 @@ class Serializer
 public:
     explicit Serializer(std::ostream& out = std::cout) : out_(out) {}
     
-    template <typename T>
-    auto save (T& object) ->
-        typename std::enable_if<IsSerialize<T>::value, Error>::type
+    template <typename T, std::enable_if_t<IsSerialize<T>::value, Error>* = nullptr>
+    Error save (T& object)
     {
         return object.serialize(*this);
     }
     
+//     Пусть будет одна такая весия, на будущее, чтобы не искать долго =)
     template <typename T>
     auto save (T& object) ->
-        typename std::enable_if<!IsSerialize<T>::value, Error>::type
+        typename std::enable_if_t<!IsSerialize<T>::value, Error>
     {
         return Error::IsNotSerialized;
     }
     
     template <class... Args>
-    Error operator()(Args... args)
+    Error operator()(Args&... args)
     {
-        return process(std::forward<Args>(args)...);
+        return process((args)...);
     }
     
 private:
     
-    
     template <class T, class... Args>
-    Error process(T&& val, Args&&... args)
+    Error process(T& val, Args&... args)
+    {
+        if (process(val) != Error::NoError){
+            return Error::IsNotSerialized;
+        };
+        return process((args)...);
+    }
+    
+    template <class T>
+    Error process(T& val)
     {
         return Error::IsNotSerialized;
     }
     
-    template <class... Args>
-    Error process(bool&& val, Args&&... args)
+    template <>
+    Error process<uint64_t>(uint64_t& val)
+    {
+        out_ << val << Separator;
+        return Error::NoError;
+    }
+    
+    template <>
+    Error process<bool>(bool& val)
     {
         if (val){
             out_ << "true" << Separator;
@@ -73,26 +76,7 @@ private:
         else{
             out_ << "false" << Separator;
         }
-        
-        if constexpr (sizeof...(Args) > 0){
-            return process(std::forward<Args>(args)...);
-        }
-        else{
-            return Error::NoError;
-        }
-    }
-    
-    template <class... Args>
-    Error process(uint64_t&& val, Args&&... args)
-    {
-        out_ << val << Separator;
-        
-        if constexpr (sizeof...(Args) > 0){
-            return process(std::forward<Args>(args)...);
-        }
-        else{
-            return Error::NoError;
-        }
+        return Error::NoError;
     }
 };
 
@@ -103,7 +87,6 @@ struct IsSerialize
 private:
     static int check(...);
     static Serializer a;
-//     static const Serializer& b = a;
     
     template <class U>
     static auto check(U* u) -> decltype(u->serialize(a));
