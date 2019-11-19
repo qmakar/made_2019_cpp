@@ -61,10 +61,7 @@ int main(int argc, const char * argv[]) {
     std::stringstream stream;
     Error err;
     
-//    std::cout << IsSerialize<Data>::value << std::endl;
     
-    
-//    static_assert(std::enable_if_t<has_serialize_v<Data>>);
     // serialize good data   -- UINT first and last
     Data x { 10, true, 2};
     Serializer serializer(stream);
