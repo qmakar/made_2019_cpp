@@ -21,17 +21,12 @@ class Deserializer
 public:
     explicit Deserializer(std::istream& in) : in_(in){}
 
-    template <typename T, std::enable_if_t<IsSerialize<T>::value, Error>* = nullptr>
+    template <typename T, class = std::enable_if_t<has_serialize_v<T>>>
     Error load (T& object)
     {
         return object.serialize(*this);
     }
     
-    template <typename T, std::enable_if_t<!IsSerialize<T>::value, Error>* = nullptr>
-    Error load (T& object)
-    {
-        return Error::IsNotSerialized;
-    }
     
     template <class... Args>
     Error operator()(Args&... args)
@@ -57,7 +52,7 @@ private:
     }
     
     template <>
-    Error process<bool>(bool& val)
+    Error process(bool& val)
     {
         std::string text;
         in_ >> text;
@@ -73,7 +68,7 @@ private:
     }
     
     template <>
-    Error process<uint64_t>(uint64_t& val)
+    Error process(uint64_t& val)
     {
         std::string text;
         in_ >> text;

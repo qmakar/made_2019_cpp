@@ -12,9 +12,6 @@
 #include "base.hpp"
 #include "CheckFunction.hpp"
 
-template<typename T>
-struct IsSerialize;
-
 class Serializer
 {
     std::ostream& out_;
@@ -23,22 +20,14 @@ class Serializer
 public:
     explicit Serializer(std::ostream& out = std::cout) : out_(out) {}
     
-    template <typename T, std::enable_if_t<IsSerialize<T>::value, Error>* = nullptr>
+    template <typename T, class = std::enable_if_t<has_serialize_v<T>>>
     Error save (T& object)
     {
         return object.serialize(*this);
     }
     
-//     Пусть будет одна такая весия, на будущее, чтобы не искать долго =)
-    template <typename T>
-    auto save (T& object) ->
-        typename std::enable_if_t<!IsSerialize<T>::value, Error>
-    {
-        return Error::IsNotSerialized;
-    }
-    
     template <class... Args>
-    Error operator()(Args&... args)
+    Error operator()(Args... args)
     {
         return process((args)...);
     }
@@ -46,7 +35,7 @@ public:
 private:
     
     template <class T, class... Args>
-    Error process(T& val, Args&... args)
+    Error process(T val, Args... args)
     {
         if (process(val) != Error::NoError){
             return Error::IsNotSerialized;
@@ -55,20 +44,20 @@ private:
     }
     
     template <class T>
-    Error process(T& val)
+    Error process(T val)
     {
         return Error::IsNotSerialized;
     }
     
     template <>
-    Error process<uint64_t>(uint64_t& val)
+    Error process(uint64_t val)
     {
         out_ << val << Separator;
         return Error::NoError;
     }
     
     template <>
-    Error process<bool>(bool& val)
+    Error process(bool val)
     {
         if (val){
             out_ << "true" << Separator;
@@ -79,6 +68,7 @@ private:
         return Error::NoError;
     }
 };
+
 
 
 template<typename T>

@@ -64,7 +64,7 @@ int main(int argc, const char * argv[]) {
 //    std::cout << IsSerialize<Data>::value << std::endl;
     
     
-    
+//    static_assert(std::enable_if_t<has_serialize_v<Data>>);
     // serialize good data   -- UINT first and last
     Data x { 10, true, 2};
     Serializer serializer(stream);
@@ -132,23 +132,21 @@ int main(int argc, const char * argv[]) {
     
     
     // serialize BAD data
-    stream.clear();
-    Data3 b { 0, 0, true};  // NO serialize method
-    Serializer serializer3(stream);
-    err = serializer3.save(b);
-    
-    assert(err == Error::IsNotSerialized);
-    
+//    stream.clear();
+//    Data3 b { 0, 0, true};  // NO serialize method
+//    Serializer serializer3(stream);
+//    static_assert(has_serialize_v<Data3>, "BAD type");
+
     
     // deserialize BAD data
-    stream.clear();
-    Data3 c { 0, 0, true};  // NO deserialize method
-    stream.clear();
-    stream << "1 2 0";          // BAD data
-    Deserializer deserializer3(stream);
-    err = deserializer3.load(c);
+//    stream.clear();
+//    Data3 c { 0, 0, true};  // NO deserialize method
+//    stream.clear();
+//    stream << "1 2 0";          // BAD data
+//    Deserializer deserializer3(stream);
+//    err = deserializer3.load(c);
+//    static_assert(has_serialize_v<Data3>, "BAD type");
     
-    assert(err == Error::IsNotSerialized);
     
     
     

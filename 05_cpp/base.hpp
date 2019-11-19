@@ -11,8 +11,7 @@
 
 #include <iostream>
 #include <sstream>
-
-//#include "CheckFunction.hpp"
+#include <type_traits>
 
 enum class Error
 {
@@ -20,5 +19,20 @@ enum class Error
     CorruptedArchive,
     IsNotSerialized
 };
+
+
+template <class T, class = void>
+struct has_serialize : std::false_type {};
+
+template <class T>
+struct
+has_serialize<T,
+            std::enable_if_t<std::is_same_v<Error,
+                                            std::decay_t<decltype(std::declval<T>().serialize(std::declval<T&>()))>>>
+            > : std::true_type {};
+
+
+template <class T>
+constexpr bool has_serialize_v = has_serialize<T>::value;
 
 #endif /* base_hpp */
