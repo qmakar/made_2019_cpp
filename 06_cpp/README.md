@@ -1,109 +1,30 @@
 # made_2019_cpp
-
-Простой сериализатор поддерживающий два типа: uint64_t и bool.
-
-```c++
-struct Data
-{
-    uint64_t a;
-    bool b;
-    uint64_t c;
-};
-
-Data x { 1, true, 2 };
-
-std::stringstream stream;
-
-Serializer serializer(stream);
-serializer.save(x);
-
-Data y { 0, false, 0 };
-
-Deserializer deserializer(stream);
-const Error err = deserializer.load(y);
-
-assert(err == Error::NoError);
-
-assert(x.a == y.a);
-assert(x.b == y.b);
-assert(x.c == y.c);
-```
-
-Сериализовать в текстовый вид с разделением пробелом, bool сериализуется как true и false
-
-##### Подсказки по реализации
+Написать класс для работы с большими целыми числами. Размер числа ограничен только размером памяти. Нужно поддержать семантику работы с обычным int:
 
 ```c++
-struct Data
-{
-    uint64_t a;
-    bool b;
-    uint64_t c;
-
-    template <class Serializer>
-    Error serialize(Serializer& serializer)
-    {
-        return serializer(a, b, c);
-    }
-};
+BigInt a = 1;
+BigInt b = a;
+BigInt c = a + b + 2;
 ```
 
-```c++
-// serializer.h
-#pragma once
+Реализовать оператор вывода в поток, сложение, вычитание, унарный минус, все операции сравнения.
 
-enum class Error
-{
-    NoError,
-    CorruptedArchive
-};
+std::vector и другие контейнеры использовать нельзя - управляйте памятью сами.
 
-class Serializer
-{
-    static constexpr char Separator = ' ';
-public:
-    explicit Serializer(std::ostream& out)
-        : out_(out)
-    {
-    }
 
-    template <class T>
-    Error save(T& object)
-    {
-        return object.serialize(*this);
-    }
 
-    template <class... ArgsT>
-    Error operator()(ArgsT... args)
-    {
-        return process(args...);
-    }
-    
-private:
-    // process использует variadic templates
-};
-```
 
-Deserializer реализуется аналогично Serializer, только принимает std::istream, а не std::ostream
+# Работа с проектом
 
-Пример десериализации bool:
+Есть Makefile, с помощью которого можно собирать и запускать проект:
 
-```c++
-Error load(bool& value)
-{
-    std::string text;
-    in_ >> text;
+- **all** - сборка всего проекта
+- **clean** - удаление собранных объектников и исполняемых файлов
+- **test** - запуск и тестирование на нескольких примерах предложенного решения
 
-    if (text == "true")
-        value = true;
-    else if (text == "false")
-        value = false;
-    else
-        return Error::CorruptedArchive;
 
-    return Error::NoError;
-}
-```
+
+
 
 
 # Работа с проектом
