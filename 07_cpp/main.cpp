@@ -7,7 +7,7 @@
 //
 
 #include "Format.hpp"
-
+#include <vector>
 
 int main(int argc, const char * argv[]) {
     
@@ -15,7 +15,7 @@ int main(int argc, const char * argv[]) {
     try{
         format(1);
     }
-    catch (std::runtime_error e)
+    catch (const std::runtime_error& e)
     {
         std::cout << "Runtime error: " << e.what() << std::endl;
     }
@@ -24,7 +24,7 @@ int main(int argc, const char * argv[]) {
     try{
         format(a);
     }
-    catch (std::runtime_error e)
+    catch (const std::runtime_error& e)
     {
         std::cout << "Runtime error: " << e.what() << std::endl;
     }
@@ -32,7 +32,7 @@ int main(int argc, const char * argv[]) {
     try{
         format(a, 1);
     }
-    catch (std::runtime_error e)
+    catch (const std::runtime_error& e)
     {
         std::cout << "Runtime error: " << e.what() << std::endl;
     }
@@ -40,7 +40,7 @@ int main(int argc, const char * argv[]) {
     try{
         format("v ", 1.5, 4.5, 3.5);
     }
-    catch (std::runtime_error e)
+    catch (const std::runtime_error& e)
     {
         std::cout << "Runtime error: " << e.what() << std::endl;
     }
@@ -48,7 +48,7 @@ int main(int argc, const char * argv[]) {
     try{
         format("{1}+{1} = {0}", 2);
     }
-    catch (std::runtime_error e)
+    catch (const std::runtime_error& e)
     {
         std::cout << "Runtime error: " << e.what() << std::endl;
     }
@@ -57,7 +57,7 @@ int main(int argc, const char * argv[]) {
     try{
         format("{1}+{1} = {0}", 2, "one", false);
     }
-    catch (std::runtime_error e)
+    catch (const std::runtime_error& e)
     {
         std::cout << "Runtime error: " << e.what() << std::endl;
     }
@@ -65,7 +65,7 @@ int main(int argc, const char * argv[]) {
     try{
         format("{3}+{4} = {0}", 2, "one", false);
     }
-    catch (std::runtime_error e)
+    catch (const std::runtime_error& e)
     {
         std::cout << "Runtime error: " << e.what() << std::endl;
     }
@@ -73,7 +73,31 @@ int main(int argc, const char * argv[]) {
     try{
         format("____{1}...+{11} = {0} < {1}", 2.5, 2000000000);
     }
-    catch (std::runtime_error e)
+    catch (const std::runtime_error& e)
+    {
+        std::cout << "Runtime error: " << e.what() << std::endl;
+    }
+    
+    try{
+        format("{{1} = {0} < {1}", 1, 1);
+    }
+    catch (const std::runtime_error& e)
+    {
+        std::cout << "Runtime error: " << e.what() << std::endl;
+    }
+    
+    try{
+        format("{1} = {0} < {1}}", 2.5, 1);
+    }
+    catch (const std::runtime_error& e)
+    {
+        std::cout << "Runtime error: " << e.what() << std::endl;
+    }
+    
+    try{
+        format("{1} {= {0} < {1}}", 2.5, 1);
+    }
+    catch (const std::runtime_error& e)
     {
         std::cout << "Runtime error: " << e.what() << std::endl;
     }
@@ -83,6 +107,7 @@ int main(int argc, const char * argv[]) {
     std::cout << format("{1}+{2} != {0}", "qw", "er", "qwert") << std::endl;
     
     std::cout << format("{1}+{1} = {0} < {1} bla-bla{2}", 2.5, 2000000000, 'd') << std::endl;
+    
     
     
     return 0;

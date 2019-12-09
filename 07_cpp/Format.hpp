@@ -9,14 +9,13 @@
 #ifndef Format_hpp
 #define Format_hpp
 
-
-
 #include <iostream>
 #include <sstream>
 
-bool replace_all(std::string& str, const std::string& from, const std::string& to);
-bool replace(std::string& str, int a, const std::string& new_str);
+#include <algorithm>
+#include <vector>
 
+std::string parse_string(std::string& str, const std::vector<std::string>& args);
 
 template <class T>
 bool process(T& str, int& argc)
@@ -26,115 +25,115 @@ bool process(T& str, int& argc)
 }
 
 template <class T>
-bool process(std::string& str, int& argc, T& val)
+bool process(std::vector<std::string>& vec, int& argc, const T& val)
 {
     std::stringstream s;
     s << val;
-    replace(str, argc++, s.str());
+    vec[argc++] = s.str();
     return true;
 }
 
-
 template <class T, class... Args>
-bool process(std::string& str, int& argc, T& val, Args... args)
+bool process(std::vector<std::string>& vec, int& argc, T& val, const Args&... args)
 {
     std::stringstream s;
     s << val;
-    
-    replace(str, argc++, s.str());
-    process(str, argc, (args)...);
+    vec[argc++] = s.str();
+    process(vec, argc, (args)...);
     return true;
 }
 
-
-
 template <class T, class... Args>
-bool format(T val, Args... args)
+std::string format(const T& val, const Args&... args)
 {
     throw std::runtime_error("Wrong format string");
-    return false;
 }
 
 
 template <class... Args>
-std::string format(const std::string& str, Args... args)
+std::string format(const std::string& str, const Args&... args)
 {
     std::string templ_ = str;
-    
-    if ((templ_.find('{') == std::string::npos) || (templ_.find('}') == std::string::npos)) {
-        throw std::runtime_error("Format string doesn\'t have any arguments in {}");
-    }
+    const std::size_t n = sizeof...(Args);
+    std::vector<std::string> vec(n);
+
     try{
         int argc = 0;
-        process(templ_, argc, (args)...);
+        process(vec, argc, (args)...);
     }
-    catch (std::runtime_error e)
+    catch (const std::runtime_error& e)
     {
         throw;
     }
     
-    if ((str.find('{') != std::string::npos) || (str.find('}') != std::string::npos)) {
-        throw std::runtime_error("Wrong format");
-    }
-    
-    return templ_;
+    return parse_string(templ_, vec);
 }
 
 template <class... Args>
-std::string format(const char* c_str, Args... args)
+std::string format(const char* c_str, const Args&... args)
 {
     std::string templ_(c_str);
     
-    auto max_elem = [] (size_t pos1, size_t pos2) {
-        return pos1 < pos2 ? pos1 : pos2;
-    };
-    
-    size_t pos;
-    pos = max_elem(templ_.find('{'), templ_.find('}'));
-    if (pos == std::string::npos) {
-        throw std::runtime_error("Format string doesn\'t have any arguments in {}");
-    }
+    const std::size_t n = sizeof...(Args);
+    std::vector<std::string> vec(n);
     
     int argc = 0;
-    process(templ_, argc, (args)...);
+    process(vec, argc, (args)...);
     
-    pos = max_elem(templ_.find('{'), templ_.find('}'));
-    if (pos != std::string::npos) {
-        replace_all(templ_, "{", "[");
-        replace_all(templ_, "}", "]");
-        throw std::runtime_error(format("Wrong format string \"{1}\" in position: {0}", pos, templ_));
-    }
-    return templ_;
+    return parse_string(templ_, vec);
 }
 
-
-bool replace_all(std::string& str, const std::string& from, const std::string& to){
-    size_t pos;
-    while ((pos = str.find(from)) != std::string::npos){
-        str = str.substr(0, pos) + to + str.substr(pos + from.size());
-        pos = str.find(from, pos + to.size());
-    }
-    return true;
-}
-
-
-bool replace(std::string& str, int a, const std::string& new_str){
-    std::string formatting = "{" + std::to_string(a) + "}";
-    size_t pos = str.find(formatting);
-    if (pos == std::string::npos){
-        replace_all(str, "{", "[");
-        replace_all(str, "}", "]");
-        throw std::runtime_error(format("Can\'t insert argument \"{0}\" into format string\"{1}\" ", new_str, str));
+std::string parse_string(std::string& str, const std::vector<std::string>& args){
+    std::string result;
+    int max_index = 0;
+    bool flag = false;
+    for (int i = 0; i < str.size(); i++){
+        while (i < str.size() && str[i] != '{' && str[i] != '}'){
+            result += str[i];
+            i++;
+        }
+        if (i >= str.size() || str[i] == '}'){
+            if (args.size() - 1 > max_index){
+                throw std::runtime_error("Too many arguments for format string!!!");
+            }
+            if (!flag){
+                throw std::runtime_error("It isn't FORMAT string, it's JUST string -__-");
+            }
+            if (str[i] == '}'){
+                throw std::runtime_error(format("DAMN! Look at the format string \"{1}\" and at position: {0}", i, str));
+            }
+            return result;
+        }
+        
+        flag = true;
+        
+        i++; // skip {
+        std::string number;
+        while (i < str.size() && str[i] != '}'){
+            if (isdigit(str[i])){
+                number += str[i];
+                i++;
+            }
+            else{
+                throw std::runtime_error(format("YOUR format string \"{1}\" is shit in position: {0}", i-1, str));
+            }
+        }
+        if (i >= str.size() || number.empty()){
+            throw std::runtime_error(format("Wrong format string \"{1}\" in position: {0}", i-1, str));
+        }
+        
+        int index = stoi(number);
+        if (index >= args.size()){
+            throw std::runtime_error(format("Wrong format string \"{1}\" in position: {0}", i-1, str));
+        }
+        result += args[index];
+        max_index = std::max(max_index, index);
     }
     
-    while (pos != std::string::npos){
-        str = str.substr(0, pos) + new_str + str.substr(pos + formatting.size());
-        pos = str.find(formatting, pos + new_str.size());
+    if (args.size()-1 > max_index){
+        throw std::runtime_error("Too many arguments for format string!!!");
     }
-    
-    return true;
+    return result;
 }
-
-
 
 #endif /* Format_hpp */
