@@ -15,7 +15,7 @@
 #include <algorithm>
 #include <vector>
 
-std::string parse_string(std::string& str, const std::vector<std::string>& args);
+std::string parse_string(const std::string& str, const std::vector<std::string>& args);
 
 template <class T>
 bool process(T& str, int& argc)
@@ -53,20 +53,13 @@ std::string format(const T& val, const Args&... args)
 template <class... Args>
 std::string format(const std::string& str, const Args&... args)
 {
-    std::string templ_ = str;
     const std::size_t n = sizeof...(Args);
     std::vector<std::string> vec(n);
 
-    try{
-        int argc = 0;
-        process(vec, argc, (args)...);
-    }
-    catch (const std::runtime_error& e)
-    {
-        throw;
-    }
+    int argc = 0;
+    process(vec, argc, (args)...);
     
-    return parse_string(templ_, vec);
+    return parse_string(str, vec);
 }
 
 template <class... Args>
@@ -83,7 +76,7 @@ std::string format(const char* c_str, const Args&... args)
     return parse_string(templ_, vec);
 }
 
-std::string parse_string(std::string& str, const std::vector<std::string>& args){
+std::string parse_string(const std::string& str, const std::vector<std::string>& args){
     std::string result;
     int max_index = 0;
     bool flag = false;
