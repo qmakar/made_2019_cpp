@@ -158,12 +158,19 @@ public:
         true_size_ = values.size();
         data_ = alloc_.allocate(size_);
         
-        std::copy(values.begin(), values.end(), data_);
+        typename std::initializer_list<T>::iterator it;
+        size_t i = 0;
+        for (it = values.begin(); it != values.end(); ++it){
+            alloc_.construct(data_ + i, *it);
+            i++;
+        }
     };
     
     ~Vector(){
         if (data_){
+            alloc_.destroy(data_);
             alloc_.deallocate(data_, size_);
+            data_ = nullptr;
         }
         size_ = 0;
         true_size_ = 0;
@@ -180,8 +187,23 @@ public:
         return false;
     }
     
-    void clear(){
+    void realloc(size_t new_size, size_t elem_count){
+        T* tmp = alloc_.allocate(new_size);
+        for (size_t i = 0; i < elem_count; i++){
+            alloc_.construct(tmp + i, data_[i]);
+        }
+        alloc_.destroy(data_);
         alloc_.deallocate(data_, size_);
+        data_ = tmp;
+        size_ = new_size;
+    }
+    
+    void clear(){
+        if (data_){
+            alloc_.destroy(data_);
+            alloc_.deallocate(data_, size_);
+            data_ = nullptr;
+        }
         size_ = true_size_ = 0;
     }
     
@@ -209,6 +231,9 @@ public:
             size_ = 2;
             true_size_ = 1;
             data_ = alloc_.allocate(size_);
+            for (size_t i = 0; i < size_; i++){
+                alloc_.construct(data_ + i);
+            }
             data_[0] = value;
         }
         else if (new_index < size_ - 1){
@@ -217,16 +242,9 @@ public:
         }
         else{
             size_t new_size = size_ * 2;
-            T* tmp = alloc_.allocate(new_size);
+            realloc(new_size, true_size_);
+            data_[new_index] = value;
             
-            for (int i = 0; i < true_size_; i++){
-                tmp[i] = data_[i];
-            }
-            tmp[new_index] = value;
-            
-            alloc_.deallocate(data_, size_);
-            data_ = tmp;
-            size_ = new_size;
             true_size_++;
         }
     }
@@ -239,59 +257,49 @@ public:
         if (true_size_ <= size_ / 4){
             size_ /= 2;
             
-            T* tmp = alloc_.allocate(size_);
-            for (int i = 0; i < true_size_; i++){
-                tmp[i] = data_[i];
-            }
-            alloc_.deallocate(data_, size_);
-            data_ = tmp;
+            realloc(size_, true_size_);
         }
     }
     
     void resize(size_t count, const T& value = 0){
         if (count == 0){
+            alloc_.destroy(data_);
             alloc_.deallocate(data_, size_);
             size_ = count;
             true_size_ = count;
         }
         else if (count > true_size_){
             T* tmp = alloc_.allocate(count);
-            
+            for (size_t i = 0; i < count; i++){
+                alloc_.construct(tmp + i);
+            }
             for (size_t i = 0; i < true_size_; i++){
                 tmp[i] = data_[i];
             }
             for (size_t i = true_size_; i < count; i++){
                 tmp[i] = value;
             }
-            
+            alloc_.destroy(data_);
             alloc_.deallocate(data_, size_);
             data_ = tmp;
             size_ = count;
             true_size_ = count;
         }
         else if (count < true_size_){
-            T* tmp = alloc_.allocate(count);
-            for (int i = 0; i < count; i++){
-                tmp[i] = data_[i];
-            }
-            alloc_.deallocate(data_, size_);
-            data_ = tmp;
+            realloc(count, count);
             true_size_ = count;
-            size_ = count;
         }
     }
+    
+    
     
     void reserve(size_t size ){
         if (size > size_){
             // size is min degree of 2
             int degree = std::log(size)/std::log(2);
-            size_ = 1 << (degree + 1);
-            T* tmp =alloc_.allocate(true_size_);
-            for (size_t i = 0; i < true_size_; i++){
-                tmp[i] = data_[i];
-            }
-            alloc_.deallocate(data_, size_);
-            data_ = tmp;
+            size_t new_size = 1 << (degree + 1);
+            
+            realloc(new_size, true_size_);
         }
     }
     
@@ -302,11 +310,11 @@ public:
         std::cout << std::endl;
     }
     
-    T& operator [](int idx) {
+    T& operator [](size_t idx) {
         return data_[idx];
     }
     
-    T operator [](int idx) const {
+    const T& operator [](size_t idx) const {
         return data_[idx];
     }
 
@@ -437,7 +445,14 @@ int main()
     assert(iter2 - iter == 2);
     std::cout << "iter2 += 100, iter2 - iter == 2"<< std::endl;
     
+    // test UNSTOPPABLE CLEAR!!!
+    vec.clear();
+    vec.clear();
+    std::cout << "vec.clear(); vec.clear(); NO SEGMENTAION FAULT"<< std::endl;
+    
     std::cout << "\n\nAll tests passed! We are awesome!=)\n"<< std::endl;
+    
+    
     
     return 0;
 }
