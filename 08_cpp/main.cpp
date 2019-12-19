@@ -21,20 +21,11 @@ class Iterator : public std::iterator<std::random_access_iterator_tag, T>
 {
     friend class Vector<T>;
     T* current_;
-    T* begin_;
-    T* end_;
     
 public:
     Iterator(const Iterator &it): current_(it.current_) {};
     
     Iterator(T* p)  : current_(p) {};
-    
-    template <typename D>
-    Iterator(Vector<D> & arr){
-        current_ = arr.get(0);
-        begin_ = arr.get(0);
-        end_ = arr.get(arr.size());
-    }
     
     bool operator!=(Iterator const& other) const{
         return current_ != other.current_;
@@ -69,15 +60,11 @@ public:
     }
     
     Iterator operator+(T const n) {
-        if (current_ + n <= end_)
-            return Iterator(current_ + n);
-        return Iterator(end_);
+        return Iterator(current_ + n);
     }
     
     Iterator operator-(T const n) {
-        if (current_ - n >= begin_)
-            return Iterator(current_ - n);
-        return Iterator(begin_);
+        return Iterator(current_ - n);
     }
     
     size_t operator-(Iterator const it) {
@@ -85,55 +72,27 @@ public:
     }
     
     Iterator& operator+=(const int& n) {
-        if (n > 0){
-            if (current_ + n <= end_)
-                current_ += n;
-            else
-                current_ = end_;
-        }
-        else{
-            int k = abs(n);
-            if (current_ - k >= begin_)
-                current_ -= k;
-            else
-                current_ = begin_;
-        }
+        current_ += n;
         return *this;
     }
     
     Iterator& operator-=(const int& n) {
-        if (n > 0){
-            if (current_ - n >= begin_)
-                current_ -= n;
-            else
-                current_ = begin_;
-        }
-        else{
-            int k = abs(n);
-            if (current_ + k <= end_)
-                current_ += k;
-            else
-                current_ = end_;
-        }
+        current_ -= n;
         return *this;
     }
     
     Iterator& operator++(){
-        if (current_ + 1 <= end_)
-            ++current_;
+        ++current_;
         return *this;
     }
     
     Iterator& operator--(){
-        if (current_ - 1 >= begin_)
-            --current_;
+        --current_;
         return *this;
     }
     
     friend const Iterator operator+(const int& n, const Iterator& it){
-        if (it.current_ + n < it.end_)
-            return Iterator(it.current_ + n);
-        return Iterator(it.end_);
+        return Iterator(it.current_ + n);
     }
 
 };
@@ -231,18 +190,18 @@ public:
             size_ = 2;
             true_size_ = 1;
             data_ = alloc_.allocate(size_);
-            for (size_t i = 0; i < size_; i++){
-                alloc_.construct(data_ + i);
-            }
+            alloc_.construct(data_);
             data_[0] = value;
         }
-        else if (new_index < size_ - 1){
+        else if (new_index < size_ / 2){
+            alloc_.construct(data_ + new_index);
             data_[new_index] = value;
             true_size_++;
         }
         else{
             size_t new_size = size_ * 2;
             realloc(new_size, true_size_);
+            alloc_.construct(data_ + new_index);
             data_[new_index] = value;
             
             true_size_++;
@@ -253,6 +212,7 @@ public:
         if (true_size_ == 0){
             return;
         }
+        
         true_size_--;
         if (true_size_ <= size_ / 4){
             size_ /= 2;
@@ -263,20 +223,21 @@ public:
     
     void resize(size_t count, const T& value = 0){
         if (count == 0){
-            alloc_.destroy(data_);
-            alloc_.deallocate(data_, size_);
+            if (data_){
+                alloc_.destroy(data_);
+                alloc_.deallocate(data_, size_);
+            }
             size_ = count;
             true_size_ = count;
         }
         else if (count > true_size_){
             T* tmp = alloc_.allocate(count);
-            for (size_t i = 0; i < count; i++){
-                alloc_.construct(tmp + i);
-            }
             for (size_t i = 0; i < true_size_; i++){
+                alloc_.construct(tmp + i);
                 tmp[i] = data_[i];
             }
             for (size_t i = true_size_; i < count; i++){
+                alloc_.construct(tmp + i);
                 tmp[i] = value;
             }
             alloc_.destroy(data_);
@@ -404,7 +365,7 @@ int main()
     
     
     //test iterator
-    Iterator<int> iter(vec);
+    Iterator<int> iter = vec.begin();
     assert(*iter == 7);
     std::cout << "*iter == " << *iter << std::endl;
     
@@ -415,9 +376,10 @@ int main()
     assert(iter == vec.end());
     std::cout << "++iter, iter == vec.end()" << std::endl;
     ++iter;
-    assert(iter == vec.end());
-    std::cout << "++iter, iter == vec.end()" << std::endl;
+//    assert(iter == vec.end());
+//    std::cout << "++iter, iter == vec.end()" << std::endl;
     
+    --iter;
     --iter;
     assert(*iter == 6);
     std::cout << "--iter, *iter == " << *iter << std::endl;
@@ -425,25 +387,26 @@ int main()
     assert(*iter == 7);
     std::cout << "--iter, *iter == " << *iter << std::endl;
     --iter;
-    assert(iter == vec.begin());
-    std::cout << "--iter, iter == vec.begin() "<< std::endl;
+//    assert(iter == vec.begin());
+//    std::cout << "--iter, iter == vec.begin() "<< std::endl;
+    
+    
+//    assert(iter == vec.end());
+//    std::cout << "iter += 10, iter == vec.end() "<< std::endl;
     
     iter+= 10;
-    assert(iter == vec.end());
-    std::cout << "iter += 10, iter == vec.end() "<< std::endl;
-    
-    
     assert(iter >= vec.begin());
     std::cout << "iter >= vec.begin()"<< std::endl;
     
-    iter += -20;
+//    iter += -20;
+    iter = vec.begin();
     assert(*(1 + iter) == 6);
-    std::cout << "iter += -20, *(1 + iter) == 6"<< std::endl;
+    std::cout << "iter = vec.begin(), *(1 + iter) == 6"<< std::endl;
     
-    Iterator<int> iter2(vec);
+    Iterator<int> iter2 = vec.begin();
     iter2 += 100;
-    assert(iter2 - iter == 2);
-    std::cout << "iter2 += 100, iter2 - iter == 2"<< std::endl;
+    assert(iter2 - iter == 100);
+    std::cout << "iter2 += 100, iter2 - iter == 100"<< std::endl;
     
     // test UNSTOPPABLE CLEAR!!!
     vec.clear();
@@ -452,7 +415,13 @@ int main()
     
     std::cout << "\n\nAll tests passed! We are awesome!=)\n"<< std::endl;
     
-    
+    vec.resize(0);
+    vec.pop_back();
+    vec.pop_back();
+    vec.clear();
+    vec.clear();
+    vec.resize(0);
+    vec.resize(0);
     
     return 0;
 }
