@@ -190,19 +190,16 @@ public:
             size_ = 2;
             true_size_ = 1;
             data_ = alloc_.allocate(size_);
-            alloc_.construct(data_);
-            data_[0] = value;
+            alloc_.construct(data_, value);
         }
-        else if (new_index < size_ / 2){
-            alloc_.construct(data_ + new_index);
-            data_[new_index] = value;
+        else if (new_index < size_){
+            alloc_.construct(data_ + new_index, value);
             true_size_++;
         }
         else{
             size_t new_size = size_ * 2;
             realloc(new_size, true_size_);
-            alloc_.construct(data_ + new_index);
-            data_[new_index] = value;
+            alloc_.construct(data_ + new_index, value);
             
             true_size_++;
         }
@@ -233,12 +230,10 @@ public:
         else if (count > true_size_){
             T* tmp = alloc_.allocate(count);
             for (size_t i = 0; i < true_size_; i++){
-                alloc_.construct(tmp + i);
-                tmp[i] = data_[i];
+                alloc_.construct(tmp + i, data_[i]);
             }
             for (size_t i = true_size_; i < count; i++){
-                alloc_.construct(tmp + i);
-                tmp[i] = value;
+                alloc_.construct(tmp + i, value);
             }
             alloc_.destroy(data_);
             alloc_.deallocate(data_, size_);
