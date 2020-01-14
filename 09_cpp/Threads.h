@@ -19,7 +19,7 @@
 
 class ThreadPool {
     std::vector<std::thread> threads;
-    std::queue<std::function<void()>> queue;
+    std::vector<std::function<void()>> queue;
     std::mutex m;
     std::condition_variable condition;
     std::atomic_bool run;
@@ -39,8 +39,7 @@ ThreadPool::ThreadPool(int num){
                              {
                                  while(true)
                                  {
-                                     std::function<void()> task;
-                                     
+                                     std::vector<std::function<void()>> tasks;
                                      {
                                          std::unique_lock<std::mutex> mut(m);
                                          condition.wait(mut, [&]()
@@ -49,13 +48,20 @@ ThreadPool::ThreadPool(int num){
                                                         }
                                                         );
                                          if (queue.empty()){
+                                             condition.wait(mut, [&]()
+                                                            {
+                                                                return !run;
+                                                            });
                                              return;
                                          }
-                                         task = queue.front();
-                                         queue.pop();
+                                         
+                                         tasks.swap(queue);
+                                         
                                      }
-                                     
-                                     task();
+                                     for (auto &func : tasks)
+                                     {
+                                         func();
+                                     }
                                  }
                              }
                              );
@@ -70,7 +76,7 @@ auto ThreadPool::exec(Func func, Args... args) -> std::future<decltype(func(args
     auto result = task->get_future();
     {
         std::unique_lock<std::mutex> lock(m);
-        queue.emplace(
+        queue.emplace_back(
                       [task]()
                       {
                           (*task)();
@@ -83,10 +89,10 @@ auto ThreadPool::exec(Func func, Args... args) -> std::future<decltype(func(args
 }
 
 ThreadPool::~ThreadPool(){
-    {
-        std::unique_lock<std::mutex> lock(m);
-        run = false;
-    }
+//    {
+//        std::unique_lock<std::mutex> lock(m);
+    run = false;
+//    }
     condition.notify_all();
     for (auto& thread: threads){
         thread.join();
