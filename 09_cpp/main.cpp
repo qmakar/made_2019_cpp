@@ -5,114 +5,13 @@
 //  Created by qmakar on 12.01.2020.
 //  Copyright © 2020 qmakar. All rights reserved.
 //
-#include <vector>
-#include <queue>
-#include <memory>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <future>
+
 #include <iostream>
-#include <queue>
 #include <cassert>
 
-class ThreadPool {
-    std::vector<std::thread> threads;
-    std::queue<std::function<void()>> queue;
-    std::mutex m;
-    std::condition_variable condition;
-    std::atomic_bool run;
-    
-public:
-    ThreadPool(int threads);
-    template<class Func, class... Args>
-    auto exec(Func func, Args... args) -> std::future<decltype(func(args...))>;
-    ~ThreadPool();
-};
+#include "Threads.h"
 
-ThreadPool::ThreadPool(int num){
-    run = true;
-    for(int i = 0; i < num; ++i){
-        threads.emplace_back(
-                             [&]()
-                             {
-                                 while(true)
-                                 {
-                                     std::function<void()> task;
-                                     
-                                     {
-                                         std::unique_lock<std::mutex> mut(m);
-                                         condition.wait(mut, [&]()
-                                                            {
-                                                                return !queue.empty() + !run;
-                                                            }
-                                                        );
-                                         if (!run && queue.empty())
-                                             return;
-                                         task = queue.front();
-                                         queue.pop();
-                                     }
-                                     
-                                     task();
-                                 }
-                             }
-                             );
-    }
-}
-
-template<class Func, class... Args>
-auto ThreadPool::exec(Func func, Args... args) -> std::future<decltype(func(args...))>{
-    auto task = std::make_shared<std::packaged_task<
-                                                    decltype(func(args...))()
-                                                    >
-                                >
-                                (std::bind(func, (args)...));
-    
-    std::future<decltype(func(args...))> result = task->get_future();
-    {
-        std::unique_lock<std::mutex> lock(m);
-        queue.emplace(
-                      [task]()
-                      {
-                        (*task)();
-                      }
-                      );
-    }
-    condition.notify_one();
-    return result;
-    
-}
-
-ThreadPool::~ThreadPool(){
-    {
-        std::unique_lock<std::mutex> lock(m);
-        run = false;
-    }
-    condition.notify_all();
-    for (auto& thread: threads){
-        thread.join();
-    }
-}
-
-int simple_function(int a){
-    int sum = 0;
-    for (int i = 0; i < a; i++){
-        sum += i;
-    }
-    return sum;
-}
-
-struct functor{
-    int elem_;
-    functor operator()(int a, int b, int c) {
-        functor nn;
-        nn.elem_ = a + b + c + 10;
-        return nn;
-    }
-};
-
-int main()
-{
+void test(){
     ThreadPool pool(8);
     std::vector<std::future<char>> results;
     
@@ -160,6 +59,12 @@ int main()
     std::cout << "functor(), 1,2,3   --->   " << res6.elem_ << std::endl;
     
     std::cout << "\n\nAll tests passed!!!\n\n";
+}
+
+
+int main()
+{
+    test();
     
     return 0;
 }
